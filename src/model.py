@@ -33,7 +33,7 @@ def truncate_embeddings(
     target_dim: Optional[int] = None
 ) -> np.ndarray:
     """
-    Performs Matryoshka dimensioality truncation and re-applies L@ normalization.
+    Performs Matryoshka dimensioality truncation and re-applies L2 normalization.
 
     CRITICAL MATHEMATICAL STEP:
     When a vector is truncated (e.g., from 768d to 256d), its L2 norm is no longer 1.0.
@@ -51,7 +51,7 @@ def truncate_embeddings(
     # Prevent division by zero with small epsilon
     normalized = sliced / np.maximum(norms, 1e-12)
 
-    return normalized.estype(np.float32)
+    return normalized.astype(np.float32)
 
 def encode_texts(
     model: SentenceTransformer,
@@ -63,7 +63,7 @@ def encode_texts(
     """
     Encodes a list of texts into vectors with optional dimension truncation.
     """
-    raw_embeddings = model.ncode(
+    raw_embeddings = model.encode(
         texts,
         batch_size = batch_size,
         show_progress_bar = show_progress_bar,
