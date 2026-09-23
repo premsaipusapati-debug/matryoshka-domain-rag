@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Jupyter / Colab
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Datasets & Large Artifacts
+data/
+output/
+checkpoints/
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.faiss
+*.csv
+
+# Environment & IDE
+.env
+.vscode/
+.idea/
+*.DS_Store

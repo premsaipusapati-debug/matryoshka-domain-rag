@@ -1,0 +1,67 @@
+# ==============================================================================
+# Configuration: Cost-Efficient Domain RAG with Matryoshka Embeddings
+# ==============================================================================
+
+project:
+  name: "matryoshka-domain-rag"
+  seed: 42
+  data_dir: "./data"
+  output_dir: "./output"
+  colab_drive_dir: "/content/drive/MyDrive/Matryoshka-RAG"
+
+dataset:
+  name: "mteb/scifact"            # SciFact BEIR benchmark dataset on HuggingFace
+  corpus_name: "corpus"
+  queries_name: "queries"
+  qrels_train: "qrels/train"
+  qrels_test: "qrels/test"
+  max_train_samples: null         # null uses full training split (~800+ queries)
+  max_eval_samples: null          # null uses all test queries (~300 queries)
+
+model:
+  base_model: "BAAI/bge-base-en-v1.5"       # 109M parameters, 768 native dimensions
+  fallback_model: "sentence-transformers/all-MiniLM-L6-v2" # 22M params, 384 native dims
+  max_seq_length: 512
+  normalize_embeddings: true               # Crucial: L2 norm simplifies cosine sim to inner product
+
+matryoshka:
+  # Dimensions to compute contrastive loss on during training
+  training_dimensions: [768, 512, 256, 128]
+  # Loss weighting constants for each sub-dimension (1.0 = equal emphasis)
+  dimension_weights: [1.0, 1.0, 1.0, 1.0]
+  # Dimensions to benchmark during the experimental phase (64d tests the degradation cliff)
+  eval_dimensions: [768, 512, 256, 128, 64]
+  # Default production sweet spot dimension for RAG inference
+  production_dim: 256
+
+training:
+  epochs: 2                                # SciFact converges quickly; 2-3 avoids overfitting
+  train_batch_size: 32                     # Maximizes in-batch negatives on Colab T4 16GB
+  eval_batch_size: 64
+  learning_rate: 2.0e-5                    # Conservative LR to avoid catastrophic forgetting
+  weight_decay: 0.01                       # AdamW weight decay
+  warmup_ratio: 0.1                        # Linear warmup across first 10% of training steps
+  lr_scheduler: "cosine"                   # CosineAnnealingLR
+  fp16: true                               # Mixed precision training
+  gradient_accumulation_steps: 1
+  save_total_limit: 2
+  logging_steps: 20
+
+evaluation:
+  top_k: 10                                # Evaluate Recall@10, MRR@10, nDCG@10
+  metrics:
+    - "recall@1"
+    - "recall@5"
+    - "recall@10"
+    - "mrr@10"
+    - "ndcg@10"
+  faiss:
+    metric_type: "inner_product"           # Exact cosine search on L2-normalized vectors
+    index_factory_string: "Flat"           # IndexFlatIP for exact ground truth retrieval
+
+rag:
+  top_k_context: 5                         # Top candidate passages injected into LLM context
+  inference_dimension: 256                 # Sliced 256d vector used for the retrieval stage
+  generator_model: "google/flan-t5-base"   # Lightweight generator for MVP RAG answers
+  max_new_tokens: 256
+  temperature: 0.2
