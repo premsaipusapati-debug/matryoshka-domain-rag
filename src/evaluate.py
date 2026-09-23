@@ -143,10 +143,10 @@ def run_dimensional_benchmarks(
 
         if baseline_storage is None:
             baseline_storage = metrics["Storage_per_1M_MB"]
-            metrics["Storage_savings_%"] = 0.0
+            metrics["Storage_Savings_%"] = 0.0
         else:
             savings = (1.0 - (metrics["Storage_per_1M_MB"] / baseline_storage)) * 100
-            metrics["Storage_savings_%"] = round(savings, 1)
+            metrics["Storage_Savings_%"] = round(savings, 1)
 
         records.append(metrics)
 
