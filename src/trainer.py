@@ -30,7 +30,7 @@ def train_matryoshka_model(
     mrl_weights: List[float] = mrl_cfg.get("dimension_weights", [1.0, 1.0, 1.0, 1.0])
 
     logger.info(f"Configuring Base Loss: MultipleNegativeRankingLoss (MNRL)...")
-    base_loss = losses.MultipleNegativeRankingLoss(model=model)
+    base_loss = losses.MultipleNegativesRankingLoss(model=model)
 
     logger.info(f"Wrapping with MatryoshkaLoss over sub-dimensions: {mrl_dims} with weights: {mrl_weights}...")
     train_loss = losses.MatryoshkaLoss(
@@ -59,3 +59,22 @@ def train_matryoshka_model(
 
     logger.info(f"Training complete! Model saved to: {output_path}")
     return model
+
+# Query + Positive Document
+#           ↓
+#         BGE
+#           ↓
+#      embeddings
+#           ↓
+#     ┌──────┴──────┐
+#     ↓             ↓
+#   MNRL       Matryoshka
+#     │             │
+#     └──────┬──────┘
+#            ↓
+#     Loss at
+#   768/512/256/128
+#            ↓
+#   Backpropagation
+#            ↓
+#   Fine-tuned model
